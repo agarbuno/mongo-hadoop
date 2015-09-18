@@ -72,6 +72,8 @@ public class BSONStorage extends StoreFunc implements StoreMetadata {
      * @param o        object representing pig type to convert to BSON-like object
      * @param field    field to place o in
      * @param toIgnore name of field in Object o to ignore
+     * @return an Object that can be stored as BSON.
+     * @throws IOException if no schema is available from the field
      */
     public static Object getTypeForBSON(final Object o, final ResourceFieldSchema field, final String toIgnore)
         throws IOException {
@@ -197,6 +199,7 @@ public class BSONStorage extends StoreFunc implements StoreMetadata {
 
     }
 
+    @Override
     public void checkSchema(final ResourceSchema schema) throws IOException {
         this.schema = schema;
         UDFContext context = UDFContext.getUDFContext();
@@ -205,15 +208,18 @@ public class BSONStorage extends StoreFunc implements StoreMetadata {
         p.setProperty(SCHEMA_SIGNATURE, schema.toString());
     }
 
+    @Override
     public void storeSchema(final ResourceSchema schema, final String location, final Job job) {
         // not implemented
     }
 
 
+    @Override
     public void storeStatistics(final ResourceStatistics stats, final String location, final Job job) {
         // not implemented
     }
 
+    @Override
     public void putNext(final Tuple tuple) throws IOException {
         try {
             final BasicDBObjectBuilder builder = BasicDBObjectBuilder.start();
@@ -237,6 +243,7 @@ public class BSONStorage extends StoreFunc implements StoreMetadata {
         }
     }
 
+    @Override
     public void prepareToWrite(final RecordWriter writer) throws IOException {
         out = writer;
         if (out == null) {
@@ -261,17 +268,23 @@ public class BSONStorage extends StoreFunc implements StoreMetadata {
 
     }
 
+    @Override
     public OutputFormat getOutputFormat() throws IOException {
         return outputFormat;
     }
 
+    @Override
     public String relToAbsPathForStoreLocation(final String location, final Path curDir) throws IOException {
         return LoadFunc.getAbsolutePath(location, curDir);
     }
 
+    @Override
     public void setStoreLocation(final String location, final Job job) throws IOException {
         final Configuration config = job.getConfiguration();
-        config.set("mapred.output.file", location);
+        // Old property.
+        config.set("mapred.output.dir", location);
+        // Modern property.
+        config.set("mapreduce.output.fileoutputformat.outputdir", location);
     }
 
 
